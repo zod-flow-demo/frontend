@@ -2,13 +2,7 @@ import './app.css'
 import { worker } from './mocks/browser'
 
 if (process.env.NODE_ENV === 'development') {
-  worker.start({
-    onUnhandledRequest: ({ url }, print) => {
-      if (url.pathname.startsWith('/api')) {
-        print.warning()
-      }
-    },
-  })
+  worker.start()
 }
 
 import App from './App.svelte'

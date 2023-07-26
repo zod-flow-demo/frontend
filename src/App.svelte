@@ -1,47 +1,154 @@
 <script lang="ts">
-  import svelteLogo from './assets/svelte.svg'
-  import viteLogo from '/vite.svg'
-  import Counter from './lib/Counter.svelte'
+  import { onMount } from 'svelte'
+  import { apiClient } from './api'
+  import type { TodoItem } from './api/api.client'
+  import { isErrorFromAlias } from '@zodios/core'
+  import { ZodError } from 'zod'
+
+  let newTodoTitle = ''
+  let todos: TodoItem[] = []
+
+  function addTodo() {
+    apiClient
+      .createTodo({
+        title: newTodoTitle,
+      })
+      .then((res) => {
+        todos = [...todos, res]
+        newTodoTitle = ''
+      })
+      .catch((err) => {
+        if (isErrorFromAlias(apiClient.api, 'createTodo', err)) {
+          alert(`Error: ${err.response.data.message}`)
+        } else if (err.cause instanceof ZodError) {
+          alert(`Error: ${err}`)
+        } else {
+          console.log('Error', err)
+        }
+      })
+  }
+
+  function toggleTodoCompleted(todo: TodoItem) {
+    const completed = !todo.completed
+    apiClient
+      .updateTodoById(
+        {
+          completed,
+        },
+        {
+          params: {
+            id: todo.id,
+          },
+        }
+      )
+      .then(() => {
+        todos = todos.map((t) => {
+          if (t.id === todo.id) {
+            return {
+              ...t,
+              completed,
+            }
+          }
+          return t
+        })
+      })
+      .catch((err) => {
+        if (isErrorFromAlias(apiClient.api, 'updateTodoById', err)) {
+          alert(`Error: ${err.response.data.message}`)
+        } else if (err.cause instanceof ZodError) {
+          alert(`Error: ${err}`)
+        } else {
+          console.log('Error', err)
+        }
+      })
+  }
+
+  function removeTodo(todo: TodoItem) {
+    apiClient
+      .deleteTodoById(null, {
+        params: {
+          id: todo.id,
+        },
+      })
+      .then(() => {
+        todos = todos.filter((t) => t.id !== todo.id)
+      })
+      .catch((err) => {
+        if (isErrorFromAlias(apiClient.api, 'deleteTodoById', err)) {
+          alert(`Error: ${err.response.data.message}`)
+        } else if (err.cause instanceof ZodError) {
+          alert(`Error: ${err}`)
+        } else {
+          console.log('Error', err)
+        }
+      })
+  }
+
+  $: activeTodoCount = todos.filter((todo) => !todo.completed).length
+
+  onMount(() => {
+    apiClient
+      .getAllTodos()
+      .then((res) => {
+        todos = res
+      })
+      .catch((err) => {
+        console.log('Error', err)
+      })
+  })
 </script>
 
-<main>
-  <div>
-    <a href="https://vitejs.dev" target="_blank" rel="noreferrer">
-      <img src={viteLogo} class="logo" alt="Vite Logo" />
-    </a>
-    <a href="https://svelte.dev" target="_blank" rel="noreferrer">
-      <img src={svelteLogo} class="logo svelte" alt="Svelte Logo" />
-    </a>
+<div
+  class="flex min-h-screen w-screen items-center justify-center overflow-x-hidden bg-gray-100"
+>
+  <div class="mx-auto my-8 w-[42rem] rounded-xl bg-white p-8">
+    <h1 class="mb-8 text-4xl font-bold">Todo App</h1>
+    <form class="mb-8" on:submit|preventDefault={addTodo}>
+      <input
+        bind:value={newTodoTitle}
+        class="w-full rounded-md border-gray-300 p-2 shadow-sm"
+        placeholder="What needs to be done?"
+      />
+    </form>
+    <ul class="mb-8">
+      {#each todos as todo (todo.id)}
+        <li
+          class="flex items-center justify-between border-b border-gray-200 py-2 last:border-b-0"
+        >
+          <label>
+            {todo.id}
+            <input
+              type="checkbox"
+              class="mr-2"
+              checked={todo.completed}
+              on:click|preventDefault={() => toggleTodoCompleted(todo)}
+            />
+            <span class={todo.completed && 'line-through'}>{todo.title}</span>
+          </label>
+          <button
+            class="text-gray-400 hover:text-gray-600"
+            on:click={() => removeTodo(todo)}
+          >
+            <svg
+              class="h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </li>
+      {/each}
+    </ul>
+    <div class="flex items-center text-sm text-gray-500">
+      <span>{activeTodoCount} item(s) left</span>
+    </div>
   </div>
-  <h1>Vite + Svelte</h1>
-
-  <div class="card">
-    <Counter />
-  </div>
-
-  <p>
-    Check out <a href="https://github.com/sveltejs/kit#readme" target="_blank" rel="noreferrer">SvelteKit</a>, the official Svelte app framework powered by Vite!
-  </p>
-
-  <p class="read-the-docs">
-    Click on the Vite and Svelte logos to learn more
-  </p>
-</main>
-
-<style>
-  .logo {
-    height: 6em;
-    padding: 1.5em;
-    will-change: filter;
-    transition: filter 300ms;
-  }
-  .logo:hover {
-    filter: drop-shadow(0 0 2em #646cffaa);
-  }
-  .logo.svelte:hover {
-    filter: drop-shadow(0 0 2em #ff3e00aa);
-  }
-  .read-the-docs {
-    color: #888;
-  }
-</style>
+</div>

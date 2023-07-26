@@ -21,7 +21,7 @@
         if (isErrorFromAlias(apiClient.api, 'createTodo', err)) {
           alert(`Error: ${err.response.data.message}`)
         } else if (err.cause instanceof ZodError) {
-          alert(`Error: ${err}`)
+          alert(err.cause.errors[0].message)
         } else {
           console.log('Error', err)
         }
@@ -56,7 +56,7 @@
         if (isErrorFromAlias(apiClient.api, 'updateTodoById', err)) {
           alert(`Error: ${err.response.data.message}`)
         } else if (err.cause instanceof ZodError) {
-          alert(`Error: ${err}`)
+          alert(err.cause.errors[0].message)
         } else {
           console.log('Error', err)
         }
@@ -77,7 +77,7 @@
         if (isErrorFromAlias(apiClient.api, 'deleteTodoById', err)) {
           alert(`Error: ${err.response.data.message}`)
         } else if (err.cause instanceof ZodError) {
-          alert(`Error: ${err}`)
+          alert(err.cause.errors[0].message)
         } else {
           console.log('Error', err)
         }
@@ -111,15 +111,23 @@
       />
     </form>
     <ul class="mb-8">
+      <li
+        class="flex items-center justify-between border-b border-gray-200 py-2 last:border-b-0"
+      >
+        <div>#</div>
+        <div />
+        <div />
+      </li>
+
       {#each todos as todo (todo.id)}
         <li
           class="flex items-center justify-between border-b border-gray-200 py-2 last:border-b-0"
         >
           <label>
-            {todo.id}
+            <span>{todo.id}</span>
             <input
               type="checkbox"
-              class="mr-2"
+              class="mr-4"
               checked={todo.completed}
               on:click|preventDefault={() => toggleTodoCompleted(todo)}
             />

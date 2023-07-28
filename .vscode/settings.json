@@ -1,0 +1,18 @@
+{
+  "eslint.validate": ["svelte"],
+  "eslint.options": {
+    "extensions": [".svelte"]
+  },
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true,
+    "source.fixAll.stylelint": true
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true
+  },
+  "files.associations": {
+    "*.json": "jsonc",
+    ".*rc": "jsonc"
+  }
+}
